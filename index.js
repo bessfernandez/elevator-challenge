@@ -8,7 +8,8 @@ class ElevatorState {
 
     this.allElevators = elevators;
   }
-  moveElevator() {
+  moveElevator(elevatorIndex) {
+    console.log('move elevator', elevatorIndex)
     // Each elevator will report as is moves from floor to floor.
     
 
@@ -25,9 +26,9 @@ class ElevatorState {
 }
 
 class Elevator {
-  constructor() {
+  constructor(currentFloor = 1) {
     // initial elevator assumptions
-    this.currentFloor = 1;
+    this.currentFloor = currentFloor;
     this.isDoorClosed = true;
     this.moveInProgress = false;   
   }
@@ -46,7 +47,12 @@ class ElevatorSimulator {
     
     // create a new Elevator class for each elevator
     for (var i = 0; i < elevators; i++) {
-      this.allElevators.push(new Elevator())
+      if (i === 1) {
+        this.allElevators.push(new Elevator(10))
+
+      } else {
+        this.allElevators.push(new Elevator())
+      }
     }
 
     this.elevatorState = new ElevatorState(this.allElevators);
@@ -62,8 +68,27 @@ class ElevatorSimulator {
       throw new Error('Cannot move elevator below first floor')
     }
 
+    let closestElevatorIndex = this.findClosestElevator(this.elevatorState.allElevators, floorRequested)
+    this.elevatorState.moveElevator(closestElevatorIndex);
+
     
-    console.log(this.elevatorState)
+    // console.log(this.elevatorState)
+  }
+  findClosestElevator(allElevators, floorRequested) {
+    let currentFloors = allElevators.map((elev, index) => {
+      return { [index]: elev.currentFloor - floorRequested}
+    });
+    
+    let closestElv = currentFloors.sort((elvA, elvB) => { 
+      if (Object.values(elvB)[0] > Object.values(elvA)[0]) {
+        return 1;
+      } else {
+        return -1;
+      }
+    })
+    
+    // return index of elevator which is sorted by key
+    return (Number(Object.keys(closestElv[0])));
   }
 }
   
