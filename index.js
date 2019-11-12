@@ -41,9 +41,11 @@ class Elevator {
   }
   reportMovementToFloor(elevatorIndex, newFloor) {
     // Each elevator will report as is moves from floor to floor.
-    console.log(`Elevator just passed ${newFloor}`)
+    console.log(`Elevator at floor ${newFloor}`)
     this.currentFloor = newFloor;
     this.moveInProgress = true;
+
+    // TODO - keep state updated with total floors
   }
   reportDoorState(doorState, elevatorIndex) {
     // Each elevator will report when it opens or closes its doors.
@@ -51,10 +53,13 @@ class Elevator {
     this.isDoorClosed = true;
   }
   reportElevatorArrived() {
+    // TODO - elevator done state needs to be completed
     console.log('Done')
     this.isDoorClosed = false;
     this.isMoveInProgress = false;
   }
+
+  // TODO - keep floors updated with total arrivals and handle maintenance mode
 }
 
 class ElevatorSimulator {
@@ -86,6 +91,11 @@ class ElevatorSimulator {
       throw new Error('Cannot move elevator below first floor')
     }
 
+    // An elevator request can be made at any floor, to go to any other flooe
+    // Below we are using state representation to find the closest elevator to a floor and move it
+    // where it needs to go, this should handle an elevator request being made from anywhere because
+    // elevator status is always in a State object and can be referenced between Classes
+
     let closestElevatorIndex = this.findClosestElevator(this.elevatorState.allElevators, floorRequested);
     
     let movedFloor = this.moveElevatorInState(closestElevatorIndex, floorRequested).then(finishedFloor => {
@@ -94,7 +104,7 @@ class ElevatorSimulator {
         console.log(this.elevatorState)
         
         // TODO - callback bananas is going on, this is not done and needs to be improved, async/await would be better fit if possible
-        return this.moveElevatorInState(closestElevatorIndex, finishedFloor);
+        return this.moveElevatorInState(closestElevatorIndex, floorRequested);
 
 
       } 
@@ -109,6 +119,10 @@ class ElevatorSimulator {
       });
       
     return updatedFloorIndex;
+  }
+  findUnoccupiedElevator() {
+    // TODO - similar to `findClosestElevator`
+    // will need to check full state and see what elevator is in progress, etc
   }
   findClosestElevator(allElevators, floorRequested) {
     // map new obj containing current floor state
