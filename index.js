@@ -35,7 +35,7 @@ class Elevator {
     this.moveInProgress = false;   
   }
   reportElevatorRequest(elevatorIndex, newFloor) {
-    // Each elevator will report as is moves from floor to floor.
+    // Reports the request made to the specific elevator, toggles that a move is in progress
     console.log(`Moving elevator ${elevatorIndex} to floor ${newFloor}`)
     this.moveInProgress = true; 
   }
@@ -57,9 +57,9 @@ class Elevator {
     console.log('Done')
     this.isDoorClosed = false;
     this.isMoveInProgress = false;
+    
+    // TODO - keep floors updated with total arrivals and handle maintenance mode
   }
-
-  // TODO - keep floors updated with total arrivals and handle maintenance mode
 }
 
 class ElevatorSimulator {
@@ -91,10 +91,12 @@ class ElevatorSimulator {
       throw new Error('Cannot move elevator below first floor')
     }
 
-    // An elevator request can be made at any floor, to go to any other flooe
+    // An elevator request can be made at any floor, to go to any other floor
     // Below we are using state representation to find the closest elevator to a floor and move it
     // where it needs to go, this should handle an elevator request being made from anywhere because
     // elevator status is always in a State object and can be referenced between Classes
+    
+    // TODO - still need to handle specific elevator request rather than closest which should be trivial
 
     let closestElevatorIndex = this.findClosestElevator(this.elevatorState.allElevators, floorRequested);
     
@@ -104,9 +106,8 @@ class ElevatorSimulator {
         console.log(this.elevatorState)
         
         // TODO - callback bananas is going on, this is not done and needs to be improved, async/await would be better fit if possible
+        // this currently isn't working quite as expected
         return this.moveElevatorInState(closestElevatorIndex, floorRequested);
-
-
       } 
     });
 
@@ -148,5 +149,5 @@ class ElevatorSimulator {
 // create elevator
 const myElevatorSimulator = new ElevatorSimulator(2, 4);
 
-// request specific elevator ro move to a floor
+// request elevator floor movement
 myElevatorSimulator.requestElevatorMovement(1, 3);
