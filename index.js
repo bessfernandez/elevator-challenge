@@ -8,32 +8,24 @@ class ElevatorState {
 
     this.allElevators = elevators;
   }
-  async moveElevator(elevatorIndex, newFloor) {
-    this.reportDoorState('closing', elevatorIndex);
-    this.reportMovement(elevatorIndex, newFloor);
+  moveElevator(elevatorIndex, newFloor) {
+    this.allElevators[elevatorIndex].reportDoorState('closing', elevatorIndex);
+    this.allElevators[elevatorIndex].reportMovementToFloor(elevatorIndex, newFloor);
 
     const movementPromise = new Promise((resolve, reject) => {
       setTimeout(() => {
-        let updatedFloor = this.allElevators[elevatorIndex].currentFloor + 1;
-        console.log('Elevator in transit', this.allElevators[elevatorIndex].currentFloor)
+        // TODO - right now this is only handling positive movement to a floor
+        let updatedFloor = this.allElevators[elevatorIndex].currentFloor = this.allElevators[elevatorIndex].currentFloor + 1;
+        this.allElevators[elevatorIndex].reportMovementToFloor(elevatorIndex, updatedFloor);
+
+        // console.log('Elevator in transit', this.allElevators[elevatorIndex].currentFloor)
         resolve(this.allElevators[elevatorIndex].currentFloor);
       }, 1000);
     });
     
     return movementPromise;
-
-    // An elevator request can be made at any floor, to go to any other floor.
-
-
   }
-  reportMovement(elevatorIndex, newFloor) {
-    // Each elevator will report as is moves from floor to floor.
-    console.log(`Moving eleator ${elevatorIndex} to floor ${newFloor}`)
-  }
-  reportDoorState(doorState, elevatorIndex) {
-    // Each elevator will report when it opens or closes its doors.
-    console.log(`${doorState} door of elevator ${elevatorIndex}`)
-  }
+
 }
 
 class Elevator {
@@ -42,6 +34,19 @@ class Elevator {
     this.currentFloor = currentFloor;
     this.isDoorClosed = true;
     this.moveInProgress = false;   
+  }
+  reportMovementToFloor(elevatorIndex, newFloor) {
+    // Each elevator will report as is moves from floor to floor.
+    console.log(`Moving elevator ${elevatorIndex} to floor ${newFloor}`)
+    this.moveInProgress = true;
+  }
+  reportDoorState(doorState, elevatorIndex) {
+    // Each elevator will report when it opens or closes its doors.
+    console.log(`${doorState} door of elevator ${elevatorIndex}`)
+    this.isDoorClosed = true;
+  }
+  reportElevatorArrived() {
+    this.isDoorClosed = false;
   }
 }
 
@@ -80,9 +85,13 @@ class ElevatorSimulator {
     }
 
     let closestElevatorIndex = this.findClosestElevator(this.elevatorState.allElevators, floorRequested);
-    let res = this.moveElevatorInState(closestElevatorIndex, floorRequested);
-    // TODO - why isn't this Promise resolving..?
-    console.log(res)
+    let movedFloor = this.moveElevatorInState(closestElevatorIndex, floorRequested).then(finishedFloor => {
+      console.log('finished', finishedFloor)
+      if (finishedFloor !== floorRequested) {
+        this.moveElevatorInState(closestElevatorIndex, finishedFloor).then(res => console.log(res));
+      }
+    });
+
     
     
     // console.log(this.elevatorState)
@@ -90,7 +99,8 @@ class ElevatorSimulator {
   moveElevatorInState(closestElevatorIndex, floorRequested) {
     // move elevator closest to floor requested
     var updatedFloorIndex = this.elevatorState.moveElevator(closestElevatorIndex, floorRequested)
-      .then(function(updatedFloor) {
+      .then(function (updatedFloor) {
+        console.log('updated', updatedFloor)
         return updatedFloor;
       });
       
@@ -121,4 +131,4 @@ class ElevatorSimulator {
 const myElevatorSimulator = new ElevatorSimulator(2, 4);
 
 // request specific elevator ro move to a floor
-myElevatorSimulator.requestElevatorMovement(1, 3);
+myElevatorSimulator.requestElevatorMovement(1, 4);
