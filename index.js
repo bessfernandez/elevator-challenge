@@ -9,8 +9,8 @@ class ElevatorState {
     this.allElevators = elevators;
   }
   moveElevator(elevatorIndex, newFloor) {
+    this.allElevators[elevatorIndex].reportElevatorRequest(elevatorIndex, newFloor);
     this.allElevators[elevatorIndex].reportDoorState('closing', elevatorIndex);
-    this.allElevators[elevatorIndex].reportMovementToFloor(elevatorIndex, newFloor);
 
     const movementPromise = new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -18,8 +18,7 @@ class ElevatorState {
         let updatedFloor = this.allElevators[elevatorIndex].currentFloor = this.allElevators[elevatorIndex].currentFloor + 1;
         this.allElevators[elevatorIndex].reportMovementToFloor(elevatorIndex, updatedFloor);
 
-        // console.log('Elevator in transit', this.allElevators[elevatorIndex].currentFloor)
-        resolve(this.allElevators[elevatorIndex].currentFloor);
+        resolve(updatedFloor);
       }, 1000);
     });
     
@@ -35,9 +34,15 @@ class Elevator {
     this.isDoorClosed = true;
     this.moveInProgress = false;   
   }
-  reportMovementToFloor(elevatorIndex, newFloor) {
+  reportElevatorRequest(elevatorIndex, newFloor) {
     // Each elevator will report as is moves from floor to floor.
     console.log(`Moving elevator ${elevatorIndex} to floor ${newFloor}`)
+    this.moveInProgress = true; 
+  }
+  reportMovementToFloor(elevatorIndex, newFloor) {
+    // Each elevator will report as is moves from floor to floor.
+    console.log(`Elevator just passed ${newFloor}`)
+    this.currentFloor = newFloor;
     this.moveInProgress = true;
   }
   reportDoorState(doorState, elevatorIndex) {
@@ -46,7 +51,9 @@ class Elevator {
     this.isDoorClosed = true;
   }
   reportElevatorArrived() {
+    console.log('Done')
     this.isDoorClosed = false;
+    this.isMoveInProgress = false;
   }
 }
 
@@ -63,12 +70,7 @@ class ElevatorSimulator {
     
     // create a new Elevator class for each elevator
     for (var i = 0; i < elevators; i++) {
-      if (i === 1) {
-        this.allElevators.push(new Elevator(10))
-
-      } else {
-        this.allElevators.push(new Elevator())
-      }
+      this.allElevators.push(new Elevator())
     }
 
     this.elevatorState = new ElevatorState(this.allElevators);
@@ -85,22 +87,24 @@ class ElevatorSimulator {
     }
 
     let closestElevatorIndex = this.findClosestElevator(this.elevatorState.allElevators, floorRequested);
+    
     let movedFloor = this.moveElevatorInState(closestElevatorIndex, floorRequested).then(finishedFloor => {
-      console.log('finished', finishedFloor)
       if (finishedFloor !== floorRequested) {
-        this.moveElevatorInState(closestElevatorIndex, finishedFloor).then(res => console.log(res));
-      }
+        // NOTE: logging a representation of where the state is at this point to show it updated
+        console.log(this.elevatorState)
+        
+        // TODO - callback bananas is going on, this is not done and needs to be improved, async/await would be better fit if possible
+        return this.moveElevatorInState(closestElevatorIndex, finishedFloor);
+
+
+      } 
     });
 
-    
-    
-    // console.log(this.elevatorState)
   }
   moveElevatorInState(closestElevatorIndex, floorRequested) {
     // move elevator closest to floor requested
     var updatedFloorIndex = this.elevatorState.moveElevator(closestElevatorIndex, floorRequested)
       .then(function (updatedFloor) {
-        console.log('updated', updatedFloor)
         return updatedFloor;
       });
       
@@ -131,4 +135,4 @@ class ElevatorSimulator {
 const myElevatorSimulator = new ElevatorSimulator(2, 4);
 
 // request specific elevator ro move to a floor
-myElevatorSimulator.requestElevatorMovement(1, 4);
+myElevatorSimulator.requestElevatorMovement(1, 3);
