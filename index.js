@@ -8,22 +8,31 @@ class ElevatorState {
 
     this.allElevators = elevators;
   }
-  moveElevator(elevatorIndex, newFloor) {
+  async moveElevator(elevatorIndex, newFloor) {
+    this.reportDoorState('closing', elevatorIndex);
     this.reportMovement(elevatorIndex, newFloor);
+
+    const movementPromise = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        let updatedFloor = this.allElevators[elevatorIndex].currentFloor + 1;
+        console.log('Elevator in transit', this.allElevators[elevatorIndex].currentFloor)
+        resolve(this.allElevators[elevatorIndex].currentFloor);
+      }, 1000);
+    });
+    
+    return movementPromise;
 
     // An elevator request can be made at any floor, to go to any other floor.
 
 
   }
   reportMovement(elevatorIndex, newFloor) {
-    // Each elevator will report when it opens or closes its doors.
-    console.log(`Closing door of elevator ${elevatorIndex}`)
-    
     // Each elevator will report as is moves from floor to floor.
     console.log(`Moving eleator ${elevatorIndex} to floor ${newFloor}`)
   }
-  reportDoorState() {
-
+  reportDoorState(doorState, elevatorIndex) {
+    // Each elevator will report when it opens or closes its doors.
+    console.log(`${doorState} door of elevator ${elevatorIndex}`)
   }
 }
 
@@ -70,13 +79,22 @@ class ElevatorSimulator {
       throw new Error('Cannot move elevator below first floor')
     }
 
-    let closestElevatorIndex = this.findClosestElevator(this.elevatorState.allElevators, floorRequested)
+    let closestElevatorIndex = this.findClosestElevator(this.elevatorState.allElevators, floorRequested);
+    let res = this.moveElevatorInState(closestElevatorIndex, floorRequested);
+    // TODO - why isn't this Promise resolving..?
+    console.log(res)
     
-    // move elevator closest to floor requested
-    this.elevatorState.moveElevator(closestElevatorIndex, floorRequested);
-
     
     // console.log(this.elevatorState)
+  }
+  moveElevatorInState(closestElevatorIndex, floorRequested) {
+    // move elevator closest to floor requested
+    var updatedFloorIndex = this.elevatorState.moveElevator(closestElevatorIndex, floorRequested)
+      .then(function(updatedFloor) {
+        return updatedFloor;
+      });
+      
+    return updatedFloorIndex;
   }
   findClosestElevator(allElevators, floorRequested) {
     // map new obj containing current floor state
